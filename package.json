@@ -1,0 +1,19 @@
+{
+  "name": "medguide",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MEDGUIDE health-navigation and care-access platform",
+  "workspaces": [
+    "backend",
+    "apps/web-app",
+    "apps/admin-dashboard"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:web": "npm run dev --workspace=apps/web-app",
+    "dev:admin": "npm run dev --workspace=apps/admin-dashboard",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "license": "UNLICENSED"
+}
