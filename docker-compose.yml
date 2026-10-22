@@ -1,28 +1,32 @@
-version: "3.9"
-
 services:
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: medguide
-      POSTGRES_PASSWORD: medguide
-      POSTGRES_DB: medguide
+      POSTGRES_USER: ${POSTGRES_USER:-medguide}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-medguide}
+      POSTGRES_DB: ${POSTGRES_DB:-medguide}
     ports:
       - "5432:5432"
     volumes:
       - medguide-db-data:/var/lib/postgresql/data
+      - ./backend/shared/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-medguide} -d ${POSTGRES_DB:-medguide}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  backend:
-    build: ./backend
+  redis:
+    image: redis:7-alpine
     restart: unless-stopped
-    env_file: .env
     ports:
-      - "4000:4000"
-    depends_on:
-      - postgres
-    volumes:
-      - ./backend:/app
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   ai-service:
     build: ./ai-service
@@ -32,6 +36,23 @@ services:
       - "8001:8001"
     volumes:
       - ./ai-service:/app
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai-service:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
 
   web-app:
     build: ./apps/web-app
