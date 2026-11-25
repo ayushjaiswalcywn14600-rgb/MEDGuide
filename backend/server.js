@@ -8,6 +8,7 @@ const rateLimit = require("express-rate-limit");
 const { ZodError } = require("zod");
 
 const authRoutes = require("./auth/routes");
+const consentRoutes = require("./consents/routes");
 const userRoutes = require("./users/routes");
 const familyRoutes = require("./family-profiles/routes");
 const symptomIntakeRoutes = require("./symptom-intake/routes");
@@ -96,6 +97,7 @@ app.get("/health", (_req, res) =>
 
 // Mount API route groups
 app.use("/api/auth", authRoutes);
+app.use("/api/consents", consentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/family-profiles", familyRoutes);
 app.use("/api/symptom-intake", symptomIntakeRoutes);
