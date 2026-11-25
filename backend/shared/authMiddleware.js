@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const { env } = require("./env");
 
 /**
  * Verifies the JWT issued after OTP login and attaches { id, role, phone } to req.user.
@@ -9,9 +10,17 @@ function requireAuth(req, res, next) {
   if (!token) return res.status(401).json({ error: "Missing auth token" });
 
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    if (!env.JWT_SECRET || env.JWT_SECRET.length < 32) {
+      throw new Error("Server authentication misconfiguration: JWT_SECRET missing or too short");
+    }
+    const decoded = jwt.verify(token, env.JWT_SECRET);
+    req.user = decoded;
     return next();
   } catch (err) {
+    if (err.message && err.message.includes("Server authentication misconfiguration")) {
+      console.error(err);
+      return res.status(500).json({ error: "Server authentication misconfiguration" });
+    }
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 }
